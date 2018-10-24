@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class PackageContent {
 
     @Id
-    private int packageId;
+    private long packageId;
 
     @Id
     @Enumerated(value = EnumType.ORDINAL)
@@ -33,11 +33,11 @@ public class PackageContent {
         this.amount = amount;
     }
 
-    public int getPackageId() {
+    public long getPackageId() {
         return packageId;
     }
 
-    public void setPackageId(int packageId) {
+    public void setPackageId(long packageId) {
         this.packageId = packageId;
     }
 
@@ -66,7 +66,7 @@ public class PackageContent {
 
     public static class PackageContentKey implements Serializable {
 
-        private int packageId;
+        private long packageId;
 
         private PackageContentType type;
 
@@ -91,7 +91,7 @@ public class PackageContent {
 
         @Override
         public int hashCode() {
-            int result = packageId;
+            int result = (int) (packageId ^ (packageId >>> 32));
             result = 31 * result + (type != null ? type.hashCode() : 0);
             return result;
         }

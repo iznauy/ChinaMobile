@@ -94,4 +94,16 @@ public class User {
     public void setBalance(double balance) {
         this.balance = balance;
     }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "phoneNumber='" + phoneNumber + '\'' +
+                ", extraMessageCount=" + extraMessageCount +
+                ", extraPhoneCallTime=" + extraPhoneCallTime +
+                ", extraNativeData=" + extraNativeData +
+                ", extraDomesticData=" + extraDomesticData +
+                ", balance=" + balance +
+                '}';
+    }
 }
