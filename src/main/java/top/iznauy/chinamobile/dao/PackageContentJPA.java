@@ -3,6 +3,7 @@ package top.iznauy.chinamobile.dao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import top.iznauy.chinamobile.entity.packages.PackageContent;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -14,5 +15,7 @@ import java.util.List;
 public interface PackageContentJPA extends JpaRepository<PackageContent, PackageContent.PackageContentKey> {
 
     List<PackageContent> findByPackageId(long packageId);
+
+    List<PackageContent> findByPackageIdIn(Iterable<Long> packagesIds);
 
 }

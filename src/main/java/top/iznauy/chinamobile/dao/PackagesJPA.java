@@ -18,4 +18,6 @@ public interface PackagesJPA extends JpaRepository<Packages, Packages.PackagesKe
                                                           Date date);
 
     List<Packages> findByPhoneNumberAndDateIsBetween(String phoneNumber, Date begin, Date end);
+
+    List<Packages> findByPhoneNumberAndDateIsAfter(String phoneNumber, Date date);
 }

@@ -67,4 +67,9 @@ public class MainTest {
         System.out.println(main.findPackages("13218068898", 2018, 10));
     }
 
+    @Test
+    public void testBill() {
+        main.showBill("13218068898");
+    }
+
 }

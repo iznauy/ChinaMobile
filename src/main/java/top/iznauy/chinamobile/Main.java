@@ -11,11 +11,10 @@ import top.iznauy.chinamobile.entity.packages.CurrentPackages;
 import top.iznauy.chinamobile.entity.packages.PackageContent;
 import top.iznauy.chinamobile.entity.packages.Packages;
 import top.iznauy.chinamobile.entity.packages.SupportedPackages;
+import top.iznauy.chinamobile.utils.Tuple;
 import top.iznauy.chinamobile.utils.Utils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -40,6 +39,8 @@ public class Main {
     private PhoneDataJPA phoneDataJPA;
 
     private PositivePhoneCallJPA positivePhoneCallJPA;
+
+    private SupportedPackagesJPA supportedPackagesJPA;
 
     @Autowired
     public void setUserJPA(UserJPA userJPA) {
@@ -74,6 +75,11 @@ public class Main {
     @Autowired
     public void setPositivePhoneCallJPA(PositivePhoneCallJPA positivePhoneCallJPA) {
         this.positivePhoneCallJPA = positivePhoneCallJPA;
+    }
+
+    @Autowired
+    public void setSupportedPackagesJPA(SupportedPackagesJPA supportedPackagesJPA) {
+        this.supportedPackagesJPA = supportedPackagesJPA;
     }
 
     public boolean subscribePackages(String phoneNumber, long packageId,
@@ -245,7 +251,79 @@ public class Main {
     }
 
     public void showBill(String phoneNumber) {
-        
+        User user = userJPA.findById(phoneNumber).orElse(null);
+        if (user == null) {
+            System.out.println("当前查询的账户不存在");
+            return;
+        }
+
+        List<CurrentPackages> currentPackagesList = currentPackagesJPA.findByPhoneNumber(phoneNumber);
+        Set<Long> relatedPackageIds = currentPackagesList.stream().map(CurrentPackages::getPackageId)
+                .collect(Collectors.toSet());
+
+        List<SupportedPackages> relatedSupportedPackages = supportedPackagesJPA.findAllById(relatedPackageIds);
+        double basicFee = relatedSupportedPackages.stream().map(SupportedPackages::getFee).reduce(0.0,
+                (integer, aDouble) -> integer + aDouble);
+        double extraPhoneCallFee = user.getExtraPhoneCallTime() * FeeTable.PHONE_CALL;
+        double extraMessageFee = user.getExtraMessageCount() * FeeTable.MESSAGE;
+        double extraNativeDataFee = user.getExtraNativeData() * FeeTable.NATIVE_DATA;
+        double extraDomesticDataFee = user.getExtraDomesticData() * FeeTable.DOMESTIC_DATA;
+
+        // 输出用户基本信息
+        System.out.println("当前用户：" + phoneNumber);
+        System.out.println("账户余额：" + user.getBalance() + "元");
+        System.out.println("您的月账单如下：");
+        System.out.println("\t月基本费：" + basicFee + "元");
+        System.out.println("\t套餐外通话时长：" + user.getExtraPhoneCallTime() + "分钟" + "\t\t\t套餐外通信费："
+                + extraPhoneCallFee + "元");
+        System.out.println("\t套餐外发送短信数：" + user.getExtraMessageCount() + "条" + "\t\t\t套餐外短信费："
+                + extraMessageFee + "元");
+        System.out.println("\t套餐外本地流量：" + user.getExtraNativeData() + "MB" + "\t\t\t套餐外本地流量费："
+                + extraNativeDataFee + "元");
+        System.out.println("\t套餐外国内流量：" + user.getExtraDomesticData() + "MB" + "\t\t\t套餐外国内流量费："
+                + extraDomesticDataFee + "元");
+
+        if (relatedSupportedPackages.size() != 0) {
+            List<Packages> packagesList = packagesJPA.findByPhoneNumberAndDateIsAfter(phoneNumber, Utils.getBeginDate());
+            Map<Long, List<Packages>> groupedPackagesList = packagesList.stream().
+                    collect(Collectors.groupingBy(Packages::getPackageId));
+            List<PackageContent> packageContentList = packageContentJPA.findByPackageIdIn(relatedPackageIds);
+
+            Map<Tuple<Long, PackageContent.PackageContentType>, PackageContent> contentMap = new HashMap<>();
+            for (PackageContent content: packageContentList) {
+                Tuple<Long, PackageContent.PackageContentType> tuple = new Tuple<>(content.getPackageId(), content.getType());
+                contentMap.put(tuple, content);
+            }
+
+            System.out.println("本月套餐使用情况如下：");
+            for (SupportedPackages supportedPackages: relatedSupportedPackages) {
+                System.out.println("\t套餐：" + supportedPackages.getPackageName());
+                List<Packages> subPackagesList = groupedPackagesList.get(supportedPackages.getId());
+                for (Packages packages: subPackagesList) {
+                    PackageContent content = contentMap.get(new Tuple<>(packages.getPackageId(), packages.getType()));
+                    switch (packages.getType()) {
+                        case DOMESTIC_DATA:
+                            System.out.println("\t\t全国流量总量为：" + content.getAmount() + "MB" + "\t\t\t剩余："
+                                    + packages.getAmount() + "MB");
+                            break;
+                        case NATIVE_DATA:
+                            System.out.println("\t\t本地流量总量为：" + content.getAmount() + "MB" + "\t\t\t剩余："
+                                    + packages.getAmount() + "MB");
+                            break;
+                        case PHONE_CALL:
+                            System.out.println("\t\t通话时长总量为：" + content.getAmount() + "分钟" + "\t\t\t剩余："
+                                    + packages.getAmount() + "分钟");
+                            break;
+                        case MESSAGE:
+                            System.out.println("\t\t短信总量为：" + content.getAmount() + "条" + "\t\t\t剩余："
+                                    + packages.getAmount() + "条");
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+        }
     }
 
     private double calculateExtraAmount(List<Packages> packagesList, double total) {
