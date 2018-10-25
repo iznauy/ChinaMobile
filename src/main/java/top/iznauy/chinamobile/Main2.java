@@ -9,11 +9,13 @@ import top.iznauy.chinamobile.entity.User;
 import top.iznauy.chinamobile.entity.packages.CurrentPackages;
 import top.iznauy.chinamobile.entity.packages.PackageContent;
 import top.iznauy.chinamobile.entity.packages.Packages;
+import top.iznauy.chinamobile.entity.packages.PackagesKey;
 import top.iznauy.chinamobile.utils.Utils;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created on 2018/10/24.
@@ -113,9 +115,40 @@ public class Main2 {
             return false;
         }
 
-        List<PackageContent> packageContents = packageContentJPA.findByPackageId(packageId);
-        boolean hasUsed = false;
-        // TODO: 明早起来写代码
+        if (inForceType == PackagesOrder.PackagesOrderInForceType.NOW) {
+            List<PackageContent> packageContents = packageContentJPA.findByPackageId(packageId);
+            List<Packages.PackagesKey> keyList = packageContents.stream().
+                    map(e -> new Packages.PackagesKey(phoneNumber, Utils.getBeginDate(), packageId, e.getType()))
+                    .collect(Collectors.toList());
+            // TODO: 明早起来写代码
+            List<Packages> packagesList = packagesJPA.findAllById(keyList);
+            boolean hasUsed = false;
+            for (Packages packages: packagesList) {
+                for (PackageContent content: packageContents) {
+                    if (content.getType() == packages.getType() && content.getAmount() > packages.getAmount()) {
+                        // 已经用了
+                        hasUsed = true;
+                        break;
+                    }
+                }
+                if (hasUsed)
+                    break;
+            }
+
+            if (hasUsed) {
+                System.out.println("套餐已使用，无法退订");
+                return false;
+            }
+            // 没有用过的话，就删掉其中所有的小项优惠
+            packagesJPA.deleteAll(packagesList);
+        }
+
+        PackagesOrder order = new PackagesOrder(phoneNumber, packageId, new Date(), inForceType,
+                PackagesOrder.PackagesOrderType.UN_SUBSCRIBE);
+        packageOrderJPA.saveAndFlush(order);
+
+        return true;
+
     }
 
     public double calculatePhoneDataFee(String phoneNumber, double amount, PhoneData.PhoneDataType type) {
