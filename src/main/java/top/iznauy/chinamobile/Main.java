@@ -82,6 +82,13 @@ public class Main {
         this.supportedPackagesJPA = supportedPackagesJPA;
     }
 
+    /**
+     * 订阅指定套餐
+     * @param phoneNumber
+     * @param packageId 需要订阅的套餐的id
+     * @param inForceType 立即生效还是下月生效
+     * @return 是否成功订阅
+     */
     public boolean subscribePackages(String phoneNumber, long packageId,
                                      PackagesOrder.PackagesOrderInForceType inForceType) {
         User user = userJPA.findById(phoneNumber).orElse(null);
@@ -124,6 +131,13 @@ public class Main {
         return true;
     }
 
+    /**
+     * 退订指定的套餐
+     * @param phoneNumber
+     * @param packageId 退订的套餐编号
+     * @param inForceType 立即生效还是下月生效
+     * @return 是否成功退订
+     */
     public boolean unSubscribePackages(String phoneNumber, long packageId,
                                        PackagesOrder.PackagesOrderInForceType inForceType) {
         User user = userJPA.findById(phoneNumber).orElse(null);
@@ -177,12 +191,30 @@ public class Main {
 
     }
 
+    /**
+     * 获取指定年月的优惠套餐及其使用情况
+     * @param phoneNumber
+     * @param year
+     * @param month
+     * @return
+     */
     public List<Packages> findPackages(String phoneNumber, int year, int month) {
         Date beginDate = Utils.getBeginDate(year, month);
         Date endDate = Utils.getEndDate(year, month);
         return packagesJPA.findByPhoneNumberAndDateIsBetween(phoneNumber, beginDate, endDate);
     }
 
+    /**
+     * 计算数据通信费用
+     * 如果存在套餐，优先扣除套餐余量
+     * 套餐不够时，使用话费支付
+     * @param phoneNumber
+     * @param amount 通信的数据量，单位是MB
+     * @param type 本地流量还是全国流量
+     * @param begin 使用流量的开始时段
+     * @param end 使用流量的结束时段
+     * @return
+     */
     public double calculatePhoneDataFee(String phoneNumber, double amount, PhoneData.PhoneDataType type, Date begin,
                                         Date end) {
         User user = userJPA.findById(phoneNumber).orElse(null);
@@ -222,6 +254,16 @@ public class Main {
         return fee;
     }
 
+    /**
+     * 计算通信费用
+     * 如果套餐存在余量，优先扣除套餐余量
+     * 套餐不足时，剩余部分使用话费支付
+     * @param phoneNumber
+     * @param start 通信开始时间
+     * @param end 通信结束时间
+     * @param receiver 被叫
+     * @return
+     */
     public double calculatePhoneCallFee(String phoneNumber, Date start, Date end, String receiver) {
         User user = userJPA.findById(phoneNumber).orElse(null);
         if (user == null)
@@ -250,6 +292,10 @@ public class Main {
         return fee;
     }
 
+    /**
+     * 显示当月账单信息
+     * @param phoneNumber
+     */
     public void showBill(String phoneNumber) {
         User user = userJPA.findById(phoneNumber).orElse(null);
         if (user == null) {
