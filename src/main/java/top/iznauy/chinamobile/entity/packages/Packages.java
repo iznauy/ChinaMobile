@@ -19,7 +19,7 @@ public class Packages {
     private String phoneNumber;
 
     @Id
-    @Temporal(value = TemporalType.DATE)
+    @Temporal(value = TemporalType.TIMESTAMP)
     private Date date;
 
     @Id
@@ -82,6 +82,18 @@ public class Packages {
 
     public void setType(PackageContent.PackageContentType type) {
         this.type = type;
+    }
+
+
+    @Override
+    public String toString() {
+        return "Packages{" +
+                "phoneNumber='" + phoneNumber + '\'' +
+                ", date=" + date +
+                ", packageId=" + packageId +
+                ", amount=" + amount +
+                ", type=" + type +
+                '}';
     }
 
     public static class PackagesKey implements Serializable {

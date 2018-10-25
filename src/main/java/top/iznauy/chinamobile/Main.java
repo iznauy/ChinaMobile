@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import top.iznauy.chinamobile.dao.*;
 import top.iznauy.chinamobile.entity.PackagesOrder;
 import top.iznauy.chinamobile.entity.PhoneData;
+import top.iznauy.chinamobile.entity.PositivePhoneCall;
 import top.iznauy.chinamobile.entity.User;
 import top.iznauy.chinamobile.entity.packages.CurrentPackages;
 import top.iznauy.chinamobile.entity.packages.PackageContent;
@@ -36,6 +37,10 @@ public class Main {
 
     private PackagesJPA packagesJPA;
 
+    private PhoneDataJPA phoneDataJPA;
+
+    private PositivePhoneCallJPA positivePhoneCallJPA;
+
     @Autowired
     public void setUserJPA(UserJPA userJPA) {
         this.userJPA = userJPA;
@@ -61,6 +66,16 @@ public class Main {
         this.packagesJPA = packagesJPA;
     }
 
+    @Autowired
+    public void setPhoneDataJPA(PhoneDataJPA phoneDataJPA) {
+        this.phoneDataJPA = phoneDataJPA;
+    }
+
+    @Autowired
+    public void setPositivePhoneCallJPA(PositivePhoneCallJPA positivePhoneCallJPA) {
+        this.positivePhoneCallJPA = positivePhoneCallJPA;
+    }
+
     public boolean subscribePackages(String phoneNumber, long packageId,
                                      PackagesOrder.PackagesOrderInForceType inForceType) {
         User user = userJPA.findById(phoneNumber).orElse(null);
@@ -75,6 +90,9 @@ public class Main {
             System.out.println("本套餐已订阅");
             return false;
         }
+
+        CurrentPackages newPackages = new CurrentPackages(phoneNumber, packageId);
+        currentPackagesJPA.saveAndFlush(newPackages);
 
         PackagesOrder order = new PackagesOrder(phoneNumber, packageId, new Date(), inForceType,
                 PackagesOrder.PackagesOrderType.SUBSCRIBE);
@@ -145,7 +163,9 @@ public class Main {
 
         PackagesOrder order = new PackagesOrder(phoneNumber, packageId, new Date(), inForceType,
                 PackagesOrder.PackagesOrderType.UN_SUBSCRIBE);
+        System.out.println(order);
         packageOrderJPA.saveAndFlush(order);
+        currentPackagesJPA.delete(new CurrentPackages(phoneNumber, packageId));
 
         return true;
 
@@ -157,7 +177,8 @@ public class Main {
         return packagesJPA.findByPhoneNumberAndDateIsBetween(phoneNumber, beginDate, endDate);
     }
 
-    public double calculatePhoneDataFee(String phoneNumber, double amount, PhoneData.PhoneDataType type) {
+    public double calculatePhoneDataFee(String phoneNumber, double amount, PhoneData.PhoneDataType type, Date begin,
+                                        Date end) {
         User user = userJPA.findById(phoneNumber).orElse(null);
         if (user == null) {
             System.out.println("电话号码不存在");
@@ -172,14 +193,30 @@ public class Main {
                 contentType, Utils.getBeginDate());
 
         double extraAmount = calculateExtraAmount(packagesList, amount);
-
+        double fee;
         if (type == PhoneData.PhoneDataType.NATIVE)
-            return extraAmount * FeeTable.NATIVE_DATA;
+            fee = extraAmount * FeeTable.NATIVE_DATA;
         else
-            return extraAmount * FeeTable.DOMESTIC_DATA;
+            fee = extraAmount * FeeTable.DOMESTIC_DATA;
+
+        packagesJPA.saveAll(packagesList);
+        packagesJPA.flush();
+
+        PhoneData phoneData = new PhoneData(phoneNumber, begin, end, amount, type, fee);
+        phoneDataJPA.saveAndFlush(phoneData);
+
+        if (extraAmount > 0) {
+            if (type == PhoneData.PhoneDataType.NATIVE)
+                user.addExtraNativeData(extraAmount);
+            else
+                user.addExtraDomesticData(extraAmount);
+            userJPA.saveAndFlush(user);
+        }
+
+        return fee;
     }
 
-    public double calculatePhoneCallFee(String phoneNumber, Date start, Date end) {
+    public double calculatePhoneCallFee(String phoneNumber, Date start, Date end, String receiver) {
         User user = userJPA.findById(phoneNumber).orElse(null);
         if (user == null)
             return 0.0;
@@ -192,8 +229,23 @@ public class Main {
                 PackageContent.PackageContentType.PHONE_CALL, Utils.getBeginDate());
 
         double extraTime = calculateExtraAmount(packagesList, standardMinutes);
-        return extraTime * FeeTable.PHONE_CALL;
+        double fee =  extraTime * FeeTable.PHONE_CALL;
 
+        packagesJPA.saveAll(packagesList);
+        packagesJPA.flush();
+
+        PositivePhoneCall positivePhoneCall = new PositivePhoneCall(phoneNumber, receiver, start, end, fee);
+        positivePhoneCallJPA.saveAndFlush(positivePhoneCall);
+
+        if (extraTime > 0) {
+            user.addExtraPhoneCallTime((int) fee);
+            userJPA.saveAndFlush(user);
+        }
+        return fee;
+    }
+
+    public void showBill(String phoneNumber) {
+        
     }
 
     private double calculateExtraAmount(List<Packages> packagesList, double total) {
@@ -204,10 +256,11 @@ public class Main {
                 if (amount >= last) {
                     amount -= last;
                     packages.setAmount(amount);
+                    last = 0;
                     break;
                 } else {
-                    amount = 0;
                     last -= amount;
+                    amount = 0;
                     packages.setAmount(amount);
                 }
             }

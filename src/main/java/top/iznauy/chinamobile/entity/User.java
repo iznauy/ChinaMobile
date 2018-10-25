@@ -63,12 +63,20 @@ public class User {
         this.extraMessageCount = extraMessageCount;
     }
 
+    public void addExtraMessageCount() {
+        this.extraMessageCount += 1;
+    }
+
     public int getExtraPhoneCallTime() {
         return extraPhoneCallTime;
     }
 
     public void setExtraPhoneCallTime(int extraPhoneCallTime) {
         this.extraPhoneCallTime = extraPhoneCallTime;
+    }
+
+    public void addExtraPhoneCallTime(int extraPhoneCallTime) {
+        this.extraPhoneCallTime += extraPhoneCallTime;
     }
 
     public double getExtraNativeData() {
@@ -79,12 +87,20 @@ public class User {
         this.extraNativeData = extraNativeData;
     }
 
+    public void addExtraNativeData(double extraNativeData) {
+        this.extraNativeData += extraNativeData;
+    }
+
     public double getExtraDomesticData() {
         return extraDomesticData;
     }
 
     public void setExtraDomesticData(double extraDomesticData) {
         this.extraDomesticData = extraDomesticData;
+    }
+
+    public void addExtraDomesticData(double extraDomesticData) {
+        this.extraDomesticData += extraDomesticData;
     }
 
     public double getBalance() {

@@ -21,12 +21,16 @@ public class SupportedPackages {
     @Column(nullable = false)
     private String packageName;
 
+    @Column(nullable = false)
+    private double fee;
+
     public SupportedPackages() {
     }
 
-    public SupportedPackages(long id, String packageName) {
+    public SupportedPackages(long id, String packageName, double fee) {
         this.id = id;
         this.packageName = packageName;
+        this.fee = fee;
     }
 
     public long getId() {
@@ -43,5 +47,13 @@ public class SupportedPackages {
 
     public void setPackageName(String packageName) {
         this.packageName = packageName;
+    }
+
+    public double getFee() {
+        return fee;
+    }
+
+    public void setFee(double fee) {
+        this.fee = fee;
     }
 }

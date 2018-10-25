@@ -22,7 +22,7 @@ public class PackagesOrder {
     private long packageId;
 
     @Id
-    @Temporal(value = TemporalType.DATE)
+    @Temporal(value = TemporalType.TIMESTAMP)
     private Date time;
 
     @Column(nullable = false)
