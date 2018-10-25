@@ -9,6 +9,7 @@ import top.iznauy.chinamobile.entity.User;
 import top.iznauy.chinamobile.entity.packages.CurrentPackages;
 import top.iznauy.chinamobile.entity.packages.PackageContent;
 import top.iznauy.chinamobile.entity.packages.Packages;
+import top.iznauy.chinamobile.entity.packages.SupportedPackages;
 import top.iznauy.chinamobile.utils.Utils;
 
 import java.util.ArrayList;
@@ -119,7 +120,7 @@ public class Main {
             List<Packages.PackagesKey> keyList = packageContents.stream().
                     map(e -> new Packages.PackagesKey(phoneNumber, Utils.getBeginDate(), packageId, e.getType()))
                     .collect(Collectors.toList());
-            // TODO: 明早起来写代码
+
             List<Packages> packagesList = packagesJPA.findAllById(keyList);
             boolean hasUsed = false;
             for (Packages packages: packagesList) {
@@ -148,6 +149,12 @@ public class Main {
 
         return true;
 
+    }
+
+    public List<Packages> findPackages(String phoneNumber, int year, int month) {
+        Date beginDate = Utils.getBeginDate(year, month);
+        Date endDate = Utils.getEndDate(year, month);
+        return packagesJPA.findByPhoneNumberAndDateIsBetween(phoneNumber, beginDate, endDate);
     }
 
     public double calculatePhoneDataFee(String phoneNumber, double amount, PhoneData.PhoneDataType type) {

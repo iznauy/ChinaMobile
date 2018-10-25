@@ -26,6 +26,22 @@ public class Utils {
         return calendar.getTime();
     }
 
+    public static Date getEndDate(int year, int month) {
+        if (month == 12) {
+            year += 1;
+            month = 1;
+        } else
+            month += 1;
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(year, month - 1, 0, 23, 59, 59);
+        return calendar.getTime();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getBeginDate(2018, 10));
+        System.out.println(getEndDate(2018, 10));
+    }
+
 }
 
 

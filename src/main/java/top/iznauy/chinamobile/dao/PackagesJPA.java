@@ -16,4 +16,6 @@ import java.util.List;
 public interface PackagesJPA extends JpaRepository<Packages, Packages.PackagesKey>{
     List<Packages> findByPhoneNumberAndTypeAndDateIsAfter(String phoneNumber, PackageContent.PackageContentType type,
                                                           Date date);
+
+    List<Packages> findByPhoneNumberAndDateIsBetween(String phoneNumber, Date begin, Date end);
 }
