@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
  * @author iznauy
  */
 @Service
-public class Main2 {
+public class Main {
 
     private UserJPA userJPA;
 
