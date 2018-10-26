@@ -97,6 +97,7 @@ public class Main {
             return false;
         }
 
+
         CurrentPackages currentPackages = currentPackagesJPA.findById(new CurrentPackages.CurrentPackagesKey(phoneNumber,
                 packageId)).orElse(null);
         if (currentPackages != null) {
@@ -104,14 +105,13 @@ public class Main {
             return false;
         }
 
-        CurrentPackages newPackages = new CurrentPackages(phoneNumber, packageId);
-        currentPackagesJPA.saveAndFlush(newPackages);
-
         PackagesOrder order = new PackagesOrder(phoneNumber, packageId, new Date(), inForceType,
                 PackagesOrder.PackagesOrderType.SUBSCRIBE);
         packageOrderJPA.saveAndFlush(order);
 
         if (inForceType == PackagesOrder.PackagesOrderInForceType.NOW) { // 立即生效需要做一些额外处理
+            CurrentPackages newPackages = new CurrentPackages(phoneNumber, packageId);
+            currentPackagesJPA.saveAndFlush(newPackages);
             List<PackageContent> packageContents = packageContentJPA.findByPackageId(packageId);
             List<Packages> packagesList = new ArrayList<>();
             for (PackageContent content: packageContents) {
@@ -179,11 +179,11 @@ public class Main {
             }
             // 没有用过的话，就删掉其中所有的小项优惠
             packagesJPA.deleteAll(packagesList);
+            packagesJPA.flush();
         }
 
         PackagesOrder order = new PackagesOrder(phoneNumber, packageId, new Date(), inForceType,
                 PackagesOrder.PackagesOrderType.UN_SUBSCRIBE);
-        System.out.println(order);
         packageOrderJPA.saveAndFlush(order);
         currentPackagesJPA.delete(new CurrentPackages(phoneNumber, packageId));
 
