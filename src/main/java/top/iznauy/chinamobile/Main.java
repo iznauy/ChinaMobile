@@ -84,8 +84,9 @@ public class Main {
 
     /**
      * 订阅指定套餐
+     *
      * @param phoneNumber
-     * @param packageId 需要订阅的套餐的id
+     * @param packageId   需要订阅的套餐的id
      * @param inForceType 立即生效还是下月生效
      * @return 是否成功订阅
      */
@@ -115,7 +116,7 @@ public class Main {
             List<PackageContent> packageContents = packageContentJPA.findByPackageId(packageId);
             System.out.println(packageContents);
             List<Packages> packagesList = new ArrayList<>();
-            for (PackageContent content: packageContents) {
+            for (PackageContent content : packageContents) {
                 PackageContent.PackageContentType type = content.getType();
                 Packages packages = new Packages();
 
@@ -136,8 +137,9 @@ public class Main {
 
     /**
      * 退订指定的套餐
+     *
      * @param phoneNumber
-     * @param packageId 退订的套餐编号
+     * @param packageId   退订的套餐编号
      * @param inForceType 立即生效还是下月生效
      * @return 是否成功退订
      */
@@ -163,8 +165,8 @@ public class Main {
 
             System.out.println(packagesList);
             boolean hasUsed = false;
-            for (Packages packages: packagesList) {
-                for (PackageContent content: packageContents) {
+            for (Packages packages : packagesList) {
+                for (PackageContent content : packageContents) {
                     if (content.getType() == packages.getType() && content.getAmount() > packages.getAmount()) {
                         // 已经用了
                         hasUsed = true;
@@ -196,6 +198,7 @@ public class Main {
 
     /**
      * 获取指定年月的优惠套餐及其使用情况
+     *
      * @param phoneNumber
      * @param year
      * @param month
@@ -211,11 +214,12 @@ public class Main {
      * 计算数据通信费用
      * 如果存在套餐，优先扣除套餐余量
      * 套餐不够时，使用话费支付
+     *
      * @param phoneNumber
-     * @param amount 通信的数据量，单位是MB
-     * @param type 本地流量还是全国流量
-     * @param begin 使用流量的开始时段
-     * @param end 使用流量的结束时段
+     * @param amount      通信的数据量，单位是MB
+     * @param type        本地流量还是全国流量
+     * @param begin       使用流量的开始时段
+     * @param end         使用流量的结束时段
      * @return
      */
     public double calculatePhoneDataFee(String phoneNumber, double amount, PhoneData.PhoneDataType type, Date begin,
@@ -261,10 +265,11 @@ public class Main {
      * 计算通信费用
      * 如果套餐存在余量，优先扣除套餐余量
      * 套餐不足时，剩余部分使用话费支付
+     *
      * @param phoneNumber
-     * @param start 通信开始时间
-     * @param end 通信结束时间
-     * @param receiver 被叫
+     * @param start       通信开始时间
+     * @param end         通信结束时间
+     * @param receiver    被叫
      * @return
      */
     public double calculatePhoneCallFee(String phoneNumber, Date start, Date end, String receiver) {
@@ -280,7 +285,7 @@ public class Main {
                 PackageContent.PackageContentType.PHONE_CALL, Utils.getBeginDate());
 
         double extraTime = calculateExtraAmount(packagesList, standardMinutes);
-        double fee =  extraTime * FeeTable.PHONE_CALL;
+        double fee = extraTime * FeeTable.PHONE_CALL;
 
         packagesJPA.saveAll(packagesList);
         packagesJPA.flush();
@@ -297,6 +302,7 @@ public class Main {
 
     /**
      * 显示当月账单信息
+     *
      * @param phoneNumber
      */
     public void showBill(String phoneNumber) {
@@ -339,16 +345,16 @@ public class Main {
             List<PackageContent> packageContentList = packageContentJPA.findByPackageIdIn(relatedPackageIds);
 
             Map<Tuple<Long, PackageContent.PackageContentType>, PackageContent> contentMap = new HashMap<>();
-            for (PackageContent content: packageContentList) {
+            for (PackageContent content : packageContentList) {
                 Tuple<Long, PackageContent.PackageContentType> tuple = new Tuple<>(content.getPackageId(), content.getType());
                 contentMap.put(tuple, content);
             }
 
             System.out.println("本月套餐使用情况如下：");
-            for (SupportedPackages supportedPackages: relatedSupportedPackages) {
+            for (SupportedPackages supportedPackages : relatedSupportedPackages) {
                 System.out.println("\t套餐：" + supportedPackages.getPackageName());
                 List<Packages> subPackagesList = groupedPackagesList.get(supportedPackages.getId());
-                for (Packages packages: subPackagesList) {
+                for (Packages packages : subPackagesList) {
                     PackageContent content = contentMap.get(new Tuple<>(packages.getPackageId(), packages.getType()));
                     switch (packages.getType()) {
                         case DOMESTIC_DATA:
@@ -377,7 +383,7 @@ public class Main {
 
     private double calculateExtraAmount(List<Packages> packagesList, double total) {
         double last = total;
-        for (Packages packages: packagesList) {
+        for (Packages packages : packagesList) {
             double amount = packages.getAmount();
             if (amount > 0.0) {
                 if (amount >= last) {

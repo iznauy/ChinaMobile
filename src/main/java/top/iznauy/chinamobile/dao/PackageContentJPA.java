@@ -3,7 +3,6 @@ package top.iznauy.chinamobile.dao;
 import org.springframework.data.jpa.repository.JpaRepository;
 import top.iznauy.chinamobile.entity.packages.PackageContent;
 
-import java.util.Collection;
 import java.util.List;
 
 /**
