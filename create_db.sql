@@ -65,7 +65,7 @@ CREATE TABLE `positive_phone_call` (
 
 DROP TABLE IF EXISTS `sent_message`;
 CREATE TABLE `sent_message` (
-  `receiver` varchar(255) NOT NULL,
+  `receiver` varchar(64) NOT NULL,
   `sender` varchar(255) NOT NULL,
   `time` datetime NOT NULL,
   `fee` double NOT NULL,

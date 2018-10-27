@@ -9,14 +9,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import top.iznauy.chinamobile.dao.PackageContentJPA;
 import top.iznauy.chinamobile.dao.SupportedPackagesJPA;
 import top.iznauy.chinamobile.dao.UserJPA;
+import top.iznauy.chinamobile.entity.PackagesOrder;
+import top.iznauy.chinamobile.entity.PhoneData;
 import top.iznauy.chinamobile.entity.User;
 import top.iznauy.chinamobile.entity.packages.PackageContent;
 import top.iznauy.chinamobile.entity.packages.SupportedPackages;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created on 2018/10/25.
@@ -33,8 +32,7 @@ public class BackgroundTest {
         B b;
     }
 
-    List<String> phoneList = new ArrayList<>();
-    Map<Long, Tuple<SupportedPackages, List<PackageContent>>> idTopPackages = new HashMap<>();
+    private List<String> phoneList = new ArrayList<>();
 
     @Autowired
     public UserJPA userJPA;
@@ -45,10 +43,27 @@ public class BackgroundTest {
     @Autowired
     public PackageContentJPA packageContentJPA;
 
+    @Autowired
+    public Main main;
+
     @Before
+    public void initData() throws Exception {
+        insertUser();
+        Thread.sleep(1000);
+        insertSupportedPackages();
+        Thread.sleep(1000);
+        subscribePackages();
+        Thread.sleep(1000);
+        unSubscribePackages();
+        Thread.sleep(1000);
+        addData();
+        Thread.sleep(1000);
+        addPhoneCallInfo();
+    }
+
     public void insertUser() {
 
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             phoneList.add(String.format("132180688%02d", i));
         }
 
@@ -62,7 +77,7 @@ public class BackgroundTest {
         userJPA.saveAll(users);
     }
 
-    @Before
+
     public void insertSupportedPackages() {
         // 全国流量套餐
         SupportedPackages supportedPackages = new SupportedPackages(1, "30元包2GB全国流量", 30);
@@ -115,9 +130,60 @@ public class BackgroundTest {
         packageContentJPA.saveAndFlush(packageContent8);
     }
 
-    @Test
-    public void test() {
-        System.out.println("ok");
+
+    public void subscribePackages() throws Exception {
+        main.subscribePackages("13218068800", 5,
+                PackagesOrder.PackagesOrderInForceType.NOW);
+        main.subscribePackages("13218068800", 1,
+                PackagesOrder.PackagesOrderInForceType.NOW);
+        main.subscribePackages("13218068801", 1,
+                PackagesOrder.PackagesOrderInForceType.NEXT_MONTH);
+        main.subscribePackages("13218068802", 2,
+                PackagesOrder.PackagesOrderInForceType.NOW);
+
+        main.subscribePackages("13218068809", 1,
+                PackagesOrder.PackagesOrderInForceType.NOW);
     }
+
+
+    public void unSubscribePackages() {
+        main.unSubscribePackages("13218068809", 1,
+                PackagesOrder.PackagesOrderInForceType.NOW);
+    }
+
+
+    public void addData() throws Exception {
+        main.calculatePhoneDataFee("13218068800", 1000, PhoneData.PhoneDataType.NATIVE,
+                new Date(), new Date());
+        main.calculatePhoneDataFee("13218068801", 24, PhoneData.PhoneDataType.NATIVE,
+                new Date(), new Date());
+        main.calculatePhoneDataFee("13218068802", 524, PhoneData.PhoneDataType.NATIVE,
+                new Date(), new Date());
+        Thread.sleep(3000);
+        main.calculatePhoneDataFee("13218068800", 768, PhoneData.PhoneDataType.NATIVE,
+                new Date(), new Date());
+        main.calculatePhoneDataFee("13218068801", 10224, PhoneData.PhoneDataType.NATIVE,
+                new Date(), new Date());
+        main.calculatePhoneDataFee("13218068802", 524, PhoneData.PhoneDataType.DOMESTIC,
+                new Date(), new Date());
+    }
+
+
+    public void addPhoneCallInfo() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.DAY_OF_MONTH, 2);
+        calendar.set(Calendar.HOUR_OF_DAY, 5);
+        Date begin1 = calendar.getTime();
+        calendar.set(Calendar.HOUR_OF_DAY, 7);
+        Date end1 = calendar.getTime();
+        main.calculatePhoneCallFee("13218068800", begin1, end1, "13218068801");
+        main.calculatePhoneCallFee("13218068801", begin1, end1, "13218068809");
+    }
+
+    @Test
+    public void main() {
+        System.out.println("OK");
+    }
+
 
 }

@@ -113,6 +113,7 @@ public class Main {
             CurrentPackages newPackages = new CurrentPackages(phoneNumber, packageId);
             currentPackagesJPA.saveAndFlush(newPackages);
             List<PackageContent> packageContents = packageContentJPA.findByPackageId(packageId);
+            System.out.println(packageContents);
             List<Packages> packagesList = new ArrayList<>();
             for (PackageContent content: packageContents) {
                 PackageContent.PackageContentType type = content.getType();
@@ -126,7 +127,9 @@ public class Main {
 
                 packagesList.add(packages);
             }
+            System.out.println(packageId);
             packagesJPA.saveAll(packagesList);
+            packagesJPA.flush();
         }
         return true;
     }
@@ -155,11 +158,10 @@ public class Main {
 
         if (inForceType == PackagesOrder.PackagesOrderInForceType.NOW) {
             List<PackageContent> packageContents = packageContentJPA.findByPackageId(packageId);
-            List<Packages.PackagesKey> keyList = packageContents.stream().
-                    map(e -> new Packages.PackagesKey(phoneNumber, Utils.getBeginDate(), packageId, e.getType()))
-                    .collect(Collectors.toList());
+            List<Packages> packagesList = packagesJPA.findByPhoneNumberAndPackageIdAndDateIsAfter(phoneNumber, packageId,
+                    Utils.getBeginDate());
 
-            List<Packages> packagesList = packagesJPA.findAllById(keyList);
+            System.out.println(packagesList);
             boolean hasUsed = false;
             for (Packages packages: packagesList) {
                 for (PackageContent content: packageContents) {
@@ -180,6 +182,7 @@ public class Main {
             // 没有用过的话，就删掉其中所有的小项优惠
             packagesJPA.deleteAll(packagesList);
             packagesJPA.flush();
+            System.out.println("执行了删除操作");
         }
 
         PackagesOrder order = new PackagesOrder(phoneNumber, packageId, new Date(), inForceType,
